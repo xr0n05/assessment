@@ -3,6 +3,8 @@ import * as ReactDOM from "react-dom";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import 'date-fns';
 import ContractForm from '../components/ContractForm';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/core/Alert';
 
 interface IProduct {
     id: number;
@@ -20,7 +22,7 @@ interface IPayableAmount {
     no_pfs_after_9_months: number;
 }
 
-class CreateContractScreen extends React.Component<{}, { products: IProduct[], payable_amounts: IPayableAmount[], products_loaded: boolean, payable_loaded: boolean }> {
+class CreateContractScreen extends React.Component<{}, { products: IProduct[], payable_amounts: IPayableAmount[], products_loaded: boolean, payable_loaded: boolean, open: boolean }> {
 
     constructor(props: any) {
         super(props);
@@ -28,8 +30,11 @@ class CreateContractScreen extends React.Component<{}, { products: IProduct[], p
             products: [],
             payable_amounts: [],
             products_loaded: false,
-            payable_loaded: false
+            payable_loaded: false,
+            open: false
         };
+
+        this.createContract = this.createContract.bind(this);
     }
 
     componentDidMount() {
@@ -63,12 +68,20 @@ class CreateContractScreen extends React.Component<{}, { products: IProduct[], p
         fetch('/contract', options)
             .then(response => response.json())
             .then(response => {
-                console.log(response);
+                if (response['status'] == 'ok') this.setState({ open: true });
             });
 
 
         console.log(data);
     }
+
+    handleClose = (event?: React.SyntheticEvent, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        this.setState({ open: false });
+    };
 
     render() {
 
@@ -87,6 +100,11 @@ class CreateContractScreen extends React.Component<{}, { products: IProduct[], p
 
             return (<div>
                 <ContractForm onCreateContract={this.createContract} brands={Array.from(brands)} product_names={Array.from(product_names)} units={Array.from(units)} products={this.state.products} deafault_payable_amounts={default_payable_amount}></ContractForm>
+                <Snackbar open={this.state.open} autoHideDuration={3000} onClose={this.handleClose}>
+                    <Alert onClose={this.handleClose} severity="success">
+                        Contract successfully created!
+                    </Alert>
+                </Snackbar>
             </div>);
         } else {
             return <CircularProgress />;

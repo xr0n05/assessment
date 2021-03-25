@@ -73,7 +73,6 @@ function ContractForm(props: ContractFormProps) {
         baseprice: null
     });
 
-
     React.useEffect(() => {
         if (state.selectedBrand && state.selectedProduct && state.selectedUnits) {
             props.products.map(product => {
@@ -242,8 +241,8 @@ function ContractForm(props: ContractFormProps) {
                             </Select>
                             <Grid item>
                                 <TextField required type="number" id="baseprice-input" label="Baseprice CHF" value={state.baseprice} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setState({...state, baseprice: e.target.valueAsNumber});
-                                }}/>
+                                    setState({ ...state, baseprice: e.target.valueAsNumber });
+                                }} />
                             </Grid>
                         </Grid>
                     </Grid>
@@ -306,7 +305,6 @@ function ContractForm(props: ContractFormProps) {
             <Button variant="outlined" color="primary" size="large" onClick={sendContractToParent}>
                 Create contract
             </Button>
-
         </div>
     );
 
