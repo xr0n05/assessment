@@ -6,9 +6,9 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
-import ContractScreen from '../containers/ContractScreen';
-import ContractTable from './ContractTable';
+import CreateContractScreen from '../containers/CreateContractScreen';
 import PatientScreen from './PatientScreen';
+import ListContractScreen from '../containers/ListContractScreen';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -86,10 +86,10 @@ export default function FullWidthTabs() {
         onChangeIndex={handleChangeIndex}
       >
         <TabPanel value={value} index={0} dir={theme.direction}>
-          <ContractScreen></ContractScreen>
+          <CreateContractScreen></CreateContractScreen>
         </TabPanel>
         <TabPanel value={value} index={1} dir={theme.direction}>
-        <ContractTable></ContractTable>
+        <ListContractScreen></ListContractScreen>
         </TabPanel>
         <TabPanel value={value} index={2} dir={theme.direction}>
           <PatientScreen></PatientScreen>

@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import CircularProgress from '@material-ui/core/CircularProgress';
 import 'date-fns';
 import ContractForm from '../components/ContractForm';
 
@@ -19,7 +20,7 @@ interface IPayableAmount {
     no_pfs_after_9_months: number;
 }
 
-class ContractScreen extends React.Component<{}, { products: IProduct[], payable_amounts: IPayableAmount[], products_loaded: boolean, payable_loaded: boolean }> {
+class CreateContractScreen extends React.Component<{}, { products: IProduct[], payable_amounts: IPayableAmount[], products_loaded: boolean, payable_loaded: boolean }> {
 
     constructor(props: any) {
         super(props);
@@ -88,11 +89,11 @@ class ContractScreen extends React.Component<{}, { products: IProduct[], payable
                 <ContractForm onCreateContract={this.createContract} brands={Array.from(brands)} product_names={Array.from(product_names)} units={Array.from(units)} products={this.state.products} deafault_payable_amounts={default_payable_amount}></ContractForm>
             </div>);
         } else {
-            return <div></div>;
+            return <CircularProgress />;
         }
 
     }
 }
 
 
-export default ContractScreen;
+export default CreateContractScreen;
