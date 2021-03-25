@@ -9,6 +9,8 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/core/Alert';
 import {
     KeyboardDatePicker,
     MuiPickersUtilsProvider
@@ -64,6 +66,8 @@ function ContractForm(props: ContractFormProps) {
     const [pfs, setPfs] = React.useState<number>(props.deafault_payable_amounts.pfs_after_9_months);
     const [noPfs, setNoPfs] = React.useState<number>(props.deafault_payable_amounts.no_pfs_after_9_months);
 
+    const [open, setOpen] = React.useState(false);
+
 
 
     const [state, setState] = React.useState<{ selectedBrand: string | null; selectedProduct: string | null; selectedUnits: number | null; baseprice: number | null; }>({
@@ -104,8 +108,29 @@ function ContractForm(props: ContractFormProps) {
         setPatientCancerStage(event.target.value as unknown as number);
     }
 
+  
+    const handleClose = (event?: React.SyntheticEvent, reason?: string) => {
+      if (reason === 'clickaway') {
+        return;
+      }
+  
+      setOpen(false);
+    };
+
 
     const sendContractToParent = () => {
+
+        if (insurer === "" || 
+            manufacturer === "" || 
+            patientName === "" || 
+            patientSurname === "" || 
+            state.selectedBrand === "" || 
+            state.selectedProduct === "" || 
+            !state.selectedUnits || 
+            !state.baseprice) {
+            setOpen(true);
+            return;
+        }
 
         var data = {
             "treatment_start": treatmentStart,
@@ -305,6 +330,12 @@ function ContractForm(props: ContractFormProps) {
             <Button variant="outlined" color="primary" size="large" onClick={sendContractToParent}>
                 Create contract
             </Button>
+
+            <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+                <Alert onClose={handleClose} severity="warning">
+                    Please fill out all required input fields!
+                </Alert>
+            </Snackbar>
         </div>
     );
 
