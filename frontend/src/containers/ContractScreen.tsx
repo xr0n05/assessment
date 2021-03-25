@@ -8,7 +8,7 @@ interface IProduct {
     brand: string;
     product: string;
     units: number;
-    base_price: number;
+    baseprice: number;
 }
 
 interface IPayableAmount {
@@ -38,15 +38,6 @@ class ContractScreen extends React.Component<{}, { products: IProduct[], payable
 
     }
 
-    // async getProducts(url: string): Promise<IProduct[]>{
-    //     const response: IProduct[] =
-    //       await fetch(url,
-    //         { headers: {'Content-Type': 'application/json'}}
-    //       ).then(res => res.json<IProduct[]>());
-
-    //     return response;
-    // }
-
     getData<T>(url: string): Promise<T> {
         return fetch(url, { headers: { 'Content-Type': 'application/json' } })
             .then(response => {
@@ -57,14 +48,32 @@ class ContractScreen extends React.Component<{}, { products: IProduct[], payable
             })
     }
 
+    createContract(data: any) {
+        console.log(data);
+    }
+
     render() {
 
-        var content = this.state.payable_loaded && this.state.products_loaded ? 
-        (<div>
-            <ContractForm products={this.state.products} deafault_payable_amounts={this.state.payable_amounts}></ContractForm>
-        </div>) : (<div></div>);
 
-        return content;
+        if (this.state.payable_loaded && this.state.products_loaded) {
+            var brands: Set<string> = new Set();
+            this.state.products.map(product => brands.add(product.brand));
+
+            var product_names: Set<string> = new Set();
+            this.state.products.map(product => product_names.add(product.product));
+
+            var units: Set<number> = new Set();
+            this.state.products.map(product => units.add(product.units));
+
+            var default_payable_amount: IPayableAmount = this.state.payable_amounts.filter(amount => amount.id == 1)[0]
+
+            return (<div>
+                <ContractForm onCreateContract={this.createContract} brands={Array.from(brands)} product_names={Array.from(product_names)} units={Array.from(units)} products={this.state.products} deafault_payable_amounts={default_payable_amount}></ContractForm>
+            </div>);
+        } else {
+            return <div></div>;
+        }
+
     }
 }
 

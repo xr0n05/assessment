@@ -7,3 +7,13 @@ class PayableAmount(db.Model):
     pfs_after_9_months = db.Column(db.Float, nullable=False)
     no_pfs_after_9_months = db.Column(db.Float, nullable=False)
     contracts = db.relationship('Contract', backref='payable_amounts', lazy=True)
+
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "os_after_12_months": self.os_after_12_months,
+            "no_os_after_12_months": self.no_os_after_12_months,
+            "pfs_after_9_months": self.pfs_after_9_months,
+            "no_pfs_after_9_months": self.no_pfs_after_9_months
+        }

@@ -22,7 +22,7 @@ export interface ContractFormProps {
         brand: string;
         product: string;
         units: number;
-        base_price: number;
+        baseprice: number;
     }[];
 
     /** Default values for the payable amounts */
@@ -32,7 +32,13 @@ export interface ContractFormProps {
         no_os_after_12_months: number;
         pfs_after_9_months: number;
         no_pfs_after_9_months: number;
-    }[];
+    };
+
+    brands: string[];
+    product_names: string[];
+    units: number[];
+
+    onCreateContract: (data: any) => void;
 }
 
 
@@ -40,6 +46,10 @@ function ContractForm(props: ContractFormProps) {
 
     const [selectedDate, setSelectedDate] = React.useState<Date | null>(
         new Date('2014-08-18T21:11:54'),
+    );
+
+    const [treatmentStart, setTreatmentStart] = React.useState<Date | null>(
+        new Date(),
     );
 
     const [state, setState] = React.useState<{ selectedBrand: string | null; selectedProduct: string | null; selectedUnits: number | null; baseprice: number | null; }>({
@@ -50,6 +60,20 @@ function ContractForm(props: ContractFormProps) {
     });
 
 
+    React.useEffect(() => {
+        if (state.selectedBrand && state.selectedProduct && state.selectedUnits) {
+            props.products.map(product => {
+                if (state.selectedBrand == product.brand && state.selectedProduct == product.product && state.selectedUnits == product.units) {
+                    setState({
+                        ...state,
+                        baseprice: product.baseprice
+                    });
+                }
+            })
+        }
+      }, [state.selectedBrand, state.selectedProduct, state.selectedUnits]);
+
+
 
     const handleChange = (event: React.ChangeEvent<{ name?: string; value: unknown }>) => {
 
@@ -57,23 +81,9 @@ function ContractForm(props: ContractFormProps) {
         const name = event.target.name as keyof typeof state;
         setState({
             ...state,
-            [name]: event.target.value,
+            [name]: event.target.value
         });
 
-        // If product has been selected, set the default baseprice
-        if (state.selectedBrand && state.selectedProduct && state.selectedUnits) {
-            props.products.map(product => {
-                if (state.selectedBrand == product.brand && state.selectedProduct == product.product && state.selectedUnits == product.units) {
-                    console.log('Found baseprice!');
-                    setState({
-                        ...state,
-                        baseprice: product.base_price
-                    });
-                }
-            })
-        }
-
-        console.log(state);
     };
 
     return (
@@ -124,7 +134,7 @@ function ContractForm(props: ContractFormProps) {
                                         label="Patient birthday"
                                         format="dd/MM/yyyy"
                                         value={selectedDate}
-                                        onChange={() => { }}
+                                        onChange={setSelectedDate}
                                         KeyboardButtonProps={{
                                             'aria-label': 'change date',
                                         }}
@@ -157,37 +167,28 @@ function ContractForm(props: ContractFormProps) {
                         <Grid container justifyContent="flex-start" spacing={2}>
                             <InputLabel id="product-brand-label">Brand</InputLabel>
                             <Select name="selectedBrand" labelId="product-brand-label" id="product_brand" value={state.selectedBrand} onChange={handleChange}>
-                                {props.products.map((product) => (
-                                    <MenuItem
-                                        value={product.brand}
-                                    >{product.brand}</MenuItem>
-                                ))}
+                                {
+                                    props.brands.map(brand => (
+                                        <option
+                                            value={brand}
+                                        >{brand}</option>))
+                                }
                             </Select>
                             <InputLabel id="product-name-label">Product</InputLabel>
                             <Select name="selectedProduct" labelId="product-name-label" id="product_name" value={state.selectedProduct} onChange={handleChange}>
-                                {props.products.map((product) => (
-                                    <MenuItem
-                                        value={product.product}
-                                    >{product.product}</MenuItem>
+                                {props.product_names.map(product_name => (<option
+                                    value={product_name}
+                                >{product_name}</option>
                                 ))}
                             </Select>
                             <InputLabel id="product-units-label">Units</InputLabel>
                             <Select name="selectedUnits" labelId="product-units-label" id="product_units" value={state.selectedUnits} onChange={handleChange}>
-                                {props.products.map((product) => (
-                                    <MenuItem
-                                        value={product.units}
-                                    >{product.units}</MenuItem>
+                                {props.units.map(unit => (
+                                    <option
+                                        value={unit}
+                                    >{unit}</option>
                                 ))}
                             </Select>
-                            {/* <Grid item>
-                                <TextField required id="brand-input" label="Brand" />
-                            </Grid> */}
-                            {/* <Grid item>
-                                <TextField required id="product-input" label="Product" />
-                            </Grid> */}
-                            {/* <Grid item>
-                                <TextField required type="number" id="units-input" label="Units" />
-                            </Grid> */}
                             <Grid item>
                                 <TextField required type="number" id="baseprice-input" label="Baseprice CHF" value={state.baseprice} />
                             </Grid>
@@ -205,16 +206,16 @@ function ContractForm(props: ContractFormProps) {
                     <Grid item xs={12}>
                         <Grid container justifyContent="flex-start" spacing={2}>
                             <Grid item>
-                                <TextField required id="os-input" label="OS after 12 months" />
+                                <TextField required type="number" id="os-input" label="OS after 12 months" defaultValue={props.deafault_payable_amounts?.os_after_12_months}/>
                             </Grid>
                             <Grid item>
-                                <TextField required id="no-os-input" label="No OS after 12 months" />
+                                <TextField required type="number" id="no-os-input" label="No OS after 12 months" defaultValue={props.deafault_payable_amounts?.no_os_after_12_months}/>
                             </Grid>
                             <Grid item>
-                                <TextField required id="pfs-input" label="PFS after 9 months" />
+                                <TextField required type="number" id="pfs-input" label="PFS after 9 months" defaultValue={props.deafault_payable_amounts?.pfs_after_9_months}/>
                             </Grid>
                             <Grid item>
-                                <TextField required id="no-pfs-input" label="No PFS after 9 months" />
+                                <TextField required type="number" id="no-pfs-input" label="No PFS after 9 months" defaultValue={props.deafault_payable_amounts?.no_pfs_after_9_months}/>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -228,8 +229,8 @@ function ContractForm(props: ContractFormProps) {
                                         id="treatment-start-picker"
                                         label="Treatment start"
                                         format="dd/MM/yyyy"
-                                        value={new Date()}
-                                        onChange={() => { }}
+                                        value={treatmentStart}
+                                        onChange={setTreatmentStart}
                                         KeyboardButtonProps={{
                                             'aria-label': 'change date',
                                         }}

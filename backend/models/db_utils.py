@@ -1,5 +1,10 @@
 from app import db
-from models import Contract, Insurer, Patient, PatientEventType, PayableAmount, Producer, Product, patient_events
+from datetime import datetime
+from models import Contract, Insurer, Patient, CancerStage, PatientEventType, PayableAmount, Producer, Product, patient_events
+
+
+def delete_db():
+    db.drop_all()
 
 def create_db():
     db.create_all()
@@ -33,10 +38,42 @@ def fill_db():
     payable_amount_conf = PayableAmount(os_after_12_months=0.75, no_os_after_12_months=0.35, pfs_after_9_months=0.85, no_pfs_after_9_months=0.40)
 
     db.session.add(payable_amount_conf)
+
+    # Add manufacturer
+    manufacturer_1 = Producer(name="Roche")
+    manufacturer_2 = Producer(name="Novartis")
+    manufacturer_3 = Producer(name="Orion")
+
+    db.session.add(manufacturer_1)
+    db.session.add(manufacturer_2)
+    db.session.add(manufacturer_3)
+
+    # Add insurer
+    insurer_1 = Insurer(name="Helsana")
+    insurer_2 = Insurer(name="Swica")
+
+    db.session.add(insurer_1)
+    db.session.add(insurer_2)
+
+    # Add patient
+    patient = Patient(surname="Muster", name="Max", birthday=datetime.now(), cancer_stage=CancerStage.two)
+
+    # Add example contract 
+    contract = Contract(producer=manufacturer_1, insurer=insurer_1, product=product_conf_1, payable_amounts=payable_amount_conf, patient=patient, treatment_start=datetime.now(), status="ongoing")
+
     db.session.commit()
 
 
-    
+def get_all_contracts():
 
-# create_db()
-fill_db()
+    # contract = db.session.query(Contract).join(Product).join(Insurer).join(Producer).join(PayableAmount).join(Patient).first()
+    contract = db.session.query(Contract).join(Patient).filter(Contract.status == "ongoing").filter(Patient.name == "Max").first()
+    print(contract.to_dict())
+
+
+
+if __name__ == "__main__":
+    # delete_db()
+    # create_db()
+    # fill_db()
+    get_all_contracts()
