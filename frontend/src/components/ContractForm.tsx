@@ -17,7 +17,7 @@ import {
 
 export interface ContractFormProps {
     /** List containing product objects */
-    products?: {
+    products: {
         id: number;
         brand: string;
         product: string;
@@ -27,11 +27,12 @@ export interface ContractFormProps {
 
     /** Default values for the payable amounts */
     deafault_payable_amounts?: {
+        id: number;
         os_after_12_months: number;
         no_os_after_12_months: number;
         pfs_after_9_months: number;
         no_pfs_after_9_months: number;
-    };
+    }[];
 }
 
 
@@ -40,6 +41,40 @@ function ContractForm(props: ContractFormProps) {
     const [selectedDate, setSelectedDate] = React.useState<Date | null>(
         new Date('2014-08-18T21:11:54'),
     );
+
+    const [state, setState] = React.useState<{ selectedBrand: string | null; selectedProduct: string | null; selectedUnits: number | null; baseprice: number | null; }>({
+        selectedBrand: null,
+        selectedProduct: null,
+        selectedUnits: null,
+        baseprice: null
+    });
+
+
+
+    const handleChange = (event: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+
+        // Update state with the newly selected product informations
+        const name = event.target.name as keyof typeof state;
+        setState({
+            ...state,
+            [name]: event.target.value,
+        });
+
+        // If product has been selected, set the default baseprice
+        if (state.selectedBrand && state.selectedProduct && state.selectedUnits) {
+            props.products.map(product => {
+                if (state.selectedBrand == product.brand && state.selectedProduct == product.product && state.selectedUnits == product.units) {
+                    console.log('Found baseprice!');
+                    setState({
+                        ...state,
+                        baseprice: product.base_price
+                    });
+                }
+            })
+        }
+
+        console.log(state);
+    };
 
     return (
         <div style={{ padding: 20 }}>
@@ -120,17 +155,41 @@ function ContractForm(props: ContractFormProps) {
 
                     <Grid item xs={12}>
                         <Grid container justifyContent="flex-start" spacing={2}>
-                            <Grid item>
+                            <InputLabel id="product-brand-label">Brand</InputLabel>
+                            <Select name="selectedBrand" labelId="product-brand-label" id="product_brand" value={state.selectedBrand} onChange={handleChange}>
+                                {props.products.map((product) => (
+                                    <MenuItem
+                                        value={product.brand}
+                                    >{product.brand}</MenuItem>
+                                ))}
+                            </Select>
+                            <InputLabel id="product-name-label">Product</InputLabel>
+                            <Select name="selectedProduct" labelId="product-name-label" id="product_name" value={state.selectedProduct} onChange={handleChange}>
+                                {props.products.map((product) => (
+                                    <MenuItem
+                                        value={product.product}
+                                    >{product.product}</MenuItem>
+                                ))}
+                            </Select>
+                            <InputLabel id="product-units-label">Units</InputLabel>
+                            <Select name="selectedUnits" labelId="product-units-label" id="product_units" value={state.selectedUnits} onChange={handleChange}>
+                                {props.products.map((product) => (
+                                    <MenuItem
+                                        value={product.units}
+                                    >{product.units}</MenuItem>
+                                ))}
+                            </Select>
+                            {/* <Grid item>
                                 <TextField required id="brand-input" label="Brand" />
-                            </Grid>
-                            <Grid item>
+                            </Grid> */}
+                            {/* <Grid item>
                                 <TextField required id="product-input" label="Product" />
-                            </Grid>
-                            <Grid item>
+                            </Grid> */}
+                            {/* <Grid item>
                                 <TextField required type="number" id="units-input" label="Units" />
-                            </Grid>
+                            </Grid> */}
                             <Grid item>
-                                <TextField required type="number" id="baseprice-input" label="Baseprice CHF" />
+                                <TextField required type="number" id="baseprice-input" label="Baseprice CHF" value={state.baseprice} />
                             </Grid>
                         </Grid>
                     </Grid>
@@ -179,7 +238,7 @@ function ContractForm(props: ContractFormProps) {
                             </Grid>
                             <Grid item>
                                 <Button variant="outlined" color="primary" size="large">
-                                    Primary
+                                    Create contract
                                 </Button>
                             </Grid>
                         </Grid>

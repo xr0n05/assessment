@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
-import ContractForm from './components/ContractForm';
 import FullWidthTabs from './components/Navigation';
 import reportWebVitals from './reportWebVitals';
 
