@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from dateutil import parser
 from models import Contract, Insurer, Patient, CancerStage, PatientEventType, PayableAmount, Producer, Product, patient_events
 
 
@@ -39,7 +40,7 @@ def fill_db():
 
     db.session.add(payable_amount_conf)
 
-    # Add manufacturer
+    # Add manufacturers
     manufacturer_1 = Producer(name="Roche")
     manufacturer_2 = Producer(name="Novartis")
     manufacturer_3 = Producer(name="Orion")
@@ -48,32 +49,34 @@ def fill_db():
     db.session.add(manufacturer_2)
     db.session.add(manufacturer_3)
 
-    # Add insurer
+    # Add insurers
     insurer_1 = Insurer(name="Helsana")
     insurer_2 = Insurer(name="Swica")
+    insurer_3 = Insurer(name="OEKK")
 
     db.session.add(insurer_1)
     db.session.add(insurer_2)
+    db.session.add(insurer_3)
 
-    # Add patient
-    patient = Patient(surname="Muster", name="Max", birthday=datetime.now(), cancer_stage=CancerStage.two)
+    # Add patients
+    patient_1 = Patient(surname="Muster", name="Max", birthday=parser.parse('1990-01-01'), cancer_stage=CancerStage.two)
+    patient_2 = Patient(surname="Muller", name="Jan", birthday=parser.parse('1998-01-01'), cancer_stage=CancerStage.zero)
+    patient_3 = Patient(surname="Zindel", name="Alice", birthday=parser.parse('1985-06-01'), cancer_stage=CancerStage.three)
 
-    # Add example contract 
-    contract = Contract(producer=manufacturer_1, insurer=insurer_1, product=product_conf_1, payable_amounts=payable_amount_conf, patient=patient, treatment_start=datetime.now(), status="ongoing")
+    # Add example contracts
+    contract_1 = Contract(producer=manufacturer_1, insurer=insurer_1, product=product_conf_1, payable_amounts=payable_amount_conf, patient=patient_1, treatment_start=parser.parse('2020-08-01'), status="ongoing")
+    contract_2 = Contract(producer=manufacturer_2, insurer=insurer_2, product=product_conf_1, payable_amounts=payable_amount_conf, patient=patient_2, treatment_start=parser.parse('2020-04-30'), status="ongoing")
+    contract_3 = Contract(producer=manufacturer_1, insurer=insurer_1, product=product_conf_1, payable_amounts=payable_amount_conf, patient=patient_3, treatment_start=parser.parse('2020-11-30'), status="ongoing")
 
+    db.session.add(contract_1)
+    db.session.add(contract_2)
+    db.session.add(contract_3)
     db.session.commit()
-
-
-def get_all_contracts():
-
-    # contract = db.session.query(Contract).join(Product).join(Insurer).join(Producer).join(PayableAmount).join(Patient).first()
-    contract = db.session.query(Contract).join(Patient).filter(Contract.status == "ongoing").filter(Patient.name == "Max").first()
-    print(contract.to_dict())
-
-
+   
 
 if __name__ == "__main__":
-    # delete_db()
-    # create_db()
-    # fill_db()
-    get_all_contracts()
+    delete_db()
+    create_db()
+    fill_db()
+    # get_all_contracts()
+    # add_patient_events()

@@ -1,22 +1,48 @@
 from flask import Flask, render_template, Response, request
 from app import app, db
 from datetime import datetime
-from dateutil import parser
+from dateutil import parser, relativedelta
 import json
-from models import Contract, Patient, Product, Producer, Insurer, PayableAmount, CancerStage
-from utils import get_age
+from models import Contract, Patient, patient_events, Product, Producer, Insurer, PayableAmount, CancerStage, PatientEventType
+from utils import get_age, check_contract_status
+
 
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
 
-@app.route('/contracts', methods=['GET'])
-def get_all_contracts():
-    contracts = db.session.query(Contract).all()
 
-    contracts_json = [contract.to_dict() for contract in contracts]
+@app.route('/event', methods=['POST'])
+def create_new_event():
+ 
+    patient_id = request.json["patient_id"]
+    event_name = request.json["event_name"]
+    event_ts = request.json["event_ts"]
 
-    return json.dumps(contracts_json)
+    event_type = db.session.query(PatientEventType).filter(PatientEventType.event_name == event_name).first()
+
+    statement = patient_events.insert().values(patient_id=patient_id, event_id=event_type.id, event_ts=parser.parse(event_ts))
+    db.session.execute(statement)
+    db.session.commit()
+
+
+    # Check contract status
+    contract = db.session.query(Contract).filter(Contract.patient_id == patient_id).first()
+    patient_events_list = db.session.query(patient_events, PatientEventType.event_name).join(Patient).join(PatientEventType).filter(Patient.id == patient_id).all()
+
+    payable_amount = check_contract_status(contract.to_dict(), patient_events_list)
+
+    if payable_amount == -1:
+        pass
+    else:
+        start_to_event_months = relativedelta.relativedelta(parser.parse(event_ts).replace(tzinfo=None), contract.treatment_start).months
+        contract.amount = start_to_event_months * (contract.product.baseprice * payable_amount)
+        contract.status = 'finished'
+        db.session.commit()
+
+    return Response('{"status": "ok"}', 200)
+
+
 
 @app.route('/products', methods=['GET'])
 def get_all_products():
@@ -26,6 +52,7 @@ def get_all_products():
 
     return json.dumps(products_json)
 
+
 @app.route('/payable-amounts', methods=['GET'])
 def get_existing_payable_amounts():
     payable_amounts = db.session.query(PayableAmount).all()
@@ -34,9 +61,40 @@ def get_existing_payable_amounts():
 
     return json.dumps(payable_amounts_json)
 
+
+@app.route('/patients', methods=['GET'])
+def get_all_patients():
+    patients = db.session.query(Patient).all()
+
+    patients_json = [patient.to_dict() for patient in patients]
+
+    return json.dumps(patients_json)
+
+
+@app.route('/patient/<patient_id>', methods=['GET'])
+def get_patient(patient_id):
+    patient = db.session.query(Patient).filter(Patient.id == patient_id).first()
+
+    patient_json = patient.to_dict()
+
+    patient_events_list = db.session.query(patient_events, PatientEventType.event_name).join(Patient).join(PatientEventType).filter(Patient.id == patient_id).all()
+    patient_events_dict = [f"Event: {x[3]} on date: {x[2].strftime('%d/%m/%Y')}" for x in patient_events_list]
+    patient_json["events"] = patient_events_dict
+
+    return json.dumps(patient_json)
+
+
+@app.route('/contracts', methods=['GET'])
+def get_all_contracts():
+    contracts = db.session.query(Contract).all()
+
+    contracts_json = [contract.to_dict() for contract in contracts]
+
+    return json.dumps(contracts_json)
+
+
 @app.route('/contract', methods=['POST'])
 def create_contract():
-
 
     try:
         treatment_start = parser.parse(request.json['treatment_start']).date()
@@ -119,9 +177,17 @@ def create_contract():
             payable_amounts = match
         else:
             payable_amounts = PayableAmount(os_after_12_months=os, no_os_after_12_months=no_os, pfs_after_9_months=pfs, no_pfs_after_9_months=no_pfs)
-
         
         new_contract = Contract(insurer=insurer, producer=manufacturer, product=product, patient=patient, status='ongoing', treatment_start=treatment_start, payable_amounts=payable_amounts)
+        
+        # Check if contract is already finished -> simulation purposes
+        payable = check_contract_status(new_contract.to_dict(), [])
+
+        if not payable == -1:
+            start_to_today = relativedelta.relativedelta(datetime.today(), treatment_start).months
+            new_contract.amount = start_to_today * (product_baseprice * payable)
+            new_contract.status = 'finished'
+
         db.session.add(new_contract)
         db.session.commit()
 

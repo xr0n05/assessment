@@ -33,3 +33,13 @@ class Patient(db.Model):
         backref=db.backref('patients', lazy=True))
     contracts = db.relationship('Contract', backref='patient', lazy=True)
 
+    def to_dict(self):
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "surname": self.surname,
+            "birthday": str(self.birthday),
+            "cancer_stage": self.cancer_stage.value
+        }
+

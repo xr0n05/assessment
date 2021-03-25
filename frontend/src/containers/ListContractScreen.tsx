@@ -27,6 +27,7 @@ interface IContract {
     no_os_payable: number;
     pfs_payable: number;
     no_pfs_payable: number;
+    amount: number;
 }
 
 

@@ -25,6 +25,7 @@ interface IContract {
     no_os_payable: number;
     pfs_payable: number;
     no_pfs_payable: number;
+    amount: number;
 }
 
 
@@ -62,6 +63,7 @@ const columns: GridColDef [] = [
 
     { field: 'treatment_start', headerName: 'Treatment start', width: 150 },
     { field: 'status', headerName: 'Contract status', width: 150 },
+    { field: 'amount', headerName: 'Amount due', width: 150 },
 
     { field: 'payable_amount_id', headerName: 'Payable Amount ID', width: 150, hide:true },
     { field: 'os_payable', headerName: 'OS after 12 months', width: 150 },

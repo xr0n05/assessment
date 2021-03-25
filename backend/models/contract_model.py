@@ -14,6 +14,7 @@ class Contract(db.Model):
     payable_amount_id = db.Column(db.Integer, db.ForeignKey('payable_amount.id'),
         nullable=False)
     treatment_start = db.Column(db.Date, nullable=False)
+    amount = db.Column(db.Float, nullable=False, default=-1)
     status = db.Column(db.String(80), nullable=False)
 
 
@@ -42,4 +43,5 @@ class Contract(db.Model):
             "no_os_payable": self.payable_amounts.no_os_after_12_months,
             "pfs_payable": self.payable_amounts.pfs_after_9_months,
             "no_pfs_payable": self.payable_amounts.no_pfs_after_9_months,
+            "amount": self.amount
         }

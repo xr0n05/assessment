@@ -101,6 +101,11 @@ function ContractForm(props: ContractFormProps) {
     };
 
 
+    const handleCancerStage = (event: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+        setPatientCancerStage(event.target.value as unknown as number);
+    }
+
+
     const sendContractToParent = () => {
 
         var data = {
@@ -189,9 +194,7 @@ function ContractForm(props: ContractFormProps) {
                             </Grid>
                             <Grid item>
                                 <InputLabel id="cancer-stage-label">Cancer stage</InputLabel>
-                                <Select labelId="cancer-stage-label" id="cancer-stage-select" value={patientCancerStage} onSelect={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setPatientCancerStage(e.target.value as unknown as number);
-                                }}>
+                                <Select labelId="cancer-stage-label" id="cancer-stage-select" value={patientCancerStage} onChange={handleCancerStage}>
                                     {[0, 1, 2, 3].map((stage) => (
                                         <MenuItem
                                             value={stage}
