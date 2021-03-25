@@ -1,8 +1,9 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 from app import app, db
 from datetime import datetime
+from dateutil import parser
 import json
-from models import Contract, Patient, Product, Producer, Insurer, PayableAmount
+from models import Contract, Patient, Product, Producer, Insurer, PayableAmount, CancerStage
 from utils import get_age
 
 @app.route('/', methods=['GET'])
@@ -36,91 +37,101 @@ def get_existing_payable_amounts():
 @app.route('/contract', methods=['POST'])
 def create_contract():
 
-    treatment_start = request.form['treatment_start']
 
-    # Find or create insurer
-    insurer_name = request.form['insurer']
-    match = db.session.query(Insurer) \
-            .filter(Insurer.name == insurer_name) \
-            .first()
+    try:
+        treatment_start = parser.parse(request.json['treatment_start']).date()
 
-    if match:
-        insurer = match
-    else:
-        insurer = Insurer(name=insurer_name)
+        # Find or create insurer
+        insurer_name = request.json['insurer']
+        match = db.session.query(Insurer) \
+                .filter(Insurer.name == insurer_name) \
+                .first()
 
-    # Find or create manufacturer
-    manufacturer_name = request.form['manufacturer']
-    match = db.session.query(Producer) \
-            .filter(Producer.name == manufacturer_name) \
-            .first()
+        if match:
+            insurer = match
+        else:
+            insurer = Insurer(name=insurer_name)
 
-    if match:
-        manufacturer = match
-    else:
-        manufacturer = Producer(name=manufacturer_name)
+        # Find or create manufacturer
+        manufacturer_name = request.json['manufacturer']
+        match = db.session.query(Producer) \
+                .filter(Producer.name == manufacturer_name) \
+                .first()
 
-    # Find or create patient
-    patient_surname = request.form['patient_surname']
-    patient_name = request.form['patient_name']
-    patient_birthday = request.form['patient_birthday']
-    patient_cancer_stage = request.form['patient_cancer_stage']
+        if match:
+            manufacturer = match
+        else:
+            manufacturer = Producer(name=manufacturer_name)
 
-    # Check if patient is young enough for enrollment
-    patient_age = get_age(patient_birthday)
-    if patient_age >= 55:
-        return Response(f"{{'Error':'Patient does not fullfill enrollment criteria: Age {patient_age} >= 55'}}", status=400, mimetype='application/json')
+        # Find or create patient
+        patient_surname = request.json['patient_surname']
+        patient_name = request.json['patient_name']
+        patient_birthday = parser.parse(request.json['patient_birthday']).date()
+        patient_cancer_stage = CancerStage(request.json['patient_cancer_stage'])
 
-    match = db.session.query(Patient) \
-            .filter(Patient.name == patient_name) \
-            .filter(Patient.surname == patient_surname) \
-            .filter(Patient.birthday == patient_birthday) \
-            .first()
+        # Check if patient is young enough for enrollment
+        patient_age = get_age(patient_birthday)
+        if patient_age >= 55:
+            return Response(f"{{'Error':'Patient does not fullfill enrollment criteria: Age {patient_age} >= 55'}}", status=400, mimetype='application/json')
 
-    if match:
-        patient = match
-    else:
-        patient = Patient(name=patient_name, surname=patient_surname, birthday=patient_birthday, cancer_stage=patient_cancer_stage)
+        match = db.session.query(Patient) \
+                .filter(Patient.name == patient_name) \
+                .filter(Patient.surname == patient_surname) \
+                .filter(Patient.birthday == patient_birthday) \
+                .first()
 
-    # Find or create product configuration
-    product_brand = request.form['product_brand']
-    product_name = request.form['product_name']
-    product_units = request.form['product_units']
-    product_baseprice = request.form['product_baseprice']
-    match = db.session.query(Product) \
-            .filter(Product.brand == product_brand) \
-            .filter(Product.product == product_name) \
-            .filter(Product.units == product_units) \
-            .filter(Product.baseprice == product_baseprice) \
-            .first()
+        if match:
+            patient = match
+        else:
+            patient = Patient(name=patient_name, surname=patient_surname, birthday=patient_birthday, cancer_stage=patient_cancer_stage)
 
-    if match:
-        product = match
-    else:
-        product = Product(brand=product_brand, product=product_name, units=product_units, baseprice=product_baseprice)
+        # Find or create product configuration
+        product_brand = request.json['product_brand']
+        product_name = request.json['product_name']
+        product_units = request.json['product_units']
+        product_baseprice = request.json['product_baseprice']
+        match = db.session.query(Product) \
+                .filter(Product.brand == product_brand) \
+                .filter(Product.product == product_name) \
+                .filter(Product.units == product_units) \
+                .filter(Product.baseprice == product_baseprice) \
+                .first()
+
+        if match:
+            product = match
+        else:
+            product = Product(brand=product_brand, product=product_name, units=product_units, baseprice=product_baseprice)
 
 
-    # Find or create payable amounts configuration
-    os = request.form['os']
-    no_os = request.form['no_os']
-    pfs = request.form['pfs']
-    no_pfs = request.form['no_pfs']
-    match = db.session.query(PayableAmount) \
-            .filter(PayableAmount.os_after_12_months == os) \
-            .filter(PayableAmount.no_os_after_12_months == no_os) \
-            .filter(PayableAmount.pfs_after_9_months == pfs) \
-            .filter(PayableAmount.no_pfs_after_9_months == no_pfs) \
-            .first()
+        # Find or create payable amounts configuration
+        os = request.json['os']
+        no_os = request.json['no_os']
+        pfs = request.json['pfs']
+        no_pfs = request.json['no_pfs']
+        match = db.session.query(PayableAmount) \
+                .filter(PayableAmount.os_after_12_months == os) \
+                .filter(PayableAmount.no_os_after_12_months == no_os) \
+                .filter(PayableAmount.pfs_after_9_months == pfs) \
+                .filter(PayableAmount.no_pfs_after_9_months == no_pfs) \
+                .first()
 
-    if match:
-        payable_amounts = match
-    else:
-        payable_amounts = PayableAmount(os_after_12_months=os, no_os_after_12_months=no_os, pfs_after_9_months=pfs, no_pfs_after_9_months=no_pfs)
+        if match:
+            payable_amounts = match
+        else:
+            payable_amounts = PayableAmount(os_after_12_months=os, no_os_after_12_months=no_os, pfs_after_9_months=pfs, no_pfs_after_9_months=no_pfs)
+
+        
+        new_contract = Contract(insurer=insurer, producer=manufacturer, product=product, patient=patient, status='ongoing', treatment_start=treatment_start, payable_amounts=payable_amounts)
+        db.session.add(new_contract)
+        db.session.commit()
+
+        return Response('{"status": "ok"}', status=200)
+
+    except:
+
+        return Response('{"status": "error"}', status=500)
 
     
-    new_contract = Contract(insurer=insurer, producer=producer, product=product, patient=patient, status='ongoing', treatment_start=treatment_start, payable_amounts=payable_amounts)
-    db.session.add(new_contract)
-    db.commit()
 
 
 

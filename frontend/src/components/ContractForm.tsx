@@ -26,7 +26,7 @@ export interface ContractFormProps {
     }[];
 
     /** Default values for the payable amounts */
-    deafault_payable_amounts?: {
+    deafault_payable_amounts: {
         id: number;
         os_after_12_months: number;
         no_os_after_12_months: number;
@@ -52,6 +52,20 @@ function ContractForm(props: ContractFormProps) {
         new Date(),
     );
 
+    const [insurer, setInsurer] = React.useState<string>('');
+    const [manufacturer, setManufacturer] = React.useState<string>('');
+
+    const [patientName, setPatientName] = React.useState<string>('');
+    const [patientSurname, setPatientSurname] = React.useState<string>('');
+    const [patientCancerStage, setPatientCancerStage] = React.useState<number>(0);
+
+    const [os, setOs] = React.useState<number>(props.deafault_payable_amounts.os_after_12_months);
+    const [noOs, setNoOs] = React.useState<number>(props.deafault_payable_amounts.no_os_after_12_months);
+    const [pfs, setPfs] = React.useState<number>(props.deafault_payable_amounts.pfs_after_9_months);
+    const [noPfs, setNoPfs] = React.useState<number>(props.deafault_payable_amounts.no_pfs_after_9_months);
+
+
+
     const [state, setState] = React.useState<{ selectedBrand: string | null; selectedProduct: string | null; selectedUnits: number | null; baseprice: number | null; }>({
         selectedBrand: null,
         selectedProduct: null,
@@ -71,7 +85,7 @@ function ContractForm(props: ContractFormProps) {
                 }
             })
         }
-      }, [state.selectedBrand, state.selectedProduct, state.selectedUnits]);
+    }, [state.selectedBrand, state.selectedProduct, state.selectedUnits]);
 
 
 
@@ -85,6 +99,30 @@ function ContractForm(props: ContractFormProps) {
         });
 
     };
+
+
+    const sendContractToParent = () => {
+
+        var data = {
+            "treatment_start": treatmentStart,
+            "insurer": insurer,
+            "manufacturer": manufacturer,
+            "patient_surname": patientSurname,
+            "patient_name": patientName,
+            "patient_birthday": selectedDate,
+            "patient_cancer_stage": patientCancerStage,
+            "product_brand": state.selectedBrand,
+            "product_name": state.selectedProduct,
+            "product_units": state.selectedUnits,
+            "product_baseprice": state.baseprice,
+            "os": os,
+            "no_os": noOs,
+            "pfs": pfs,
+            "no_pfs": noPfs
+        }
+
+        props.onCreateContract(data);
+    }
 
     return (
         <div style={{ padding: 20 }}>
@@ -100,10 +138,14 @@ function ContractForm(props: ContractFormProps) {
                     <Grid item xs={12}>
                         <Grid container justifyContent="flex-start" spacing={2}>
                             <Grid item>
-                                <TextField required id="manufacturer-input" label="Manufacturer" />
+                                <TextField required id="manufacturer-input" label="Manufacturer" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setManufacturer(e.target.value);
+                                }} />
                             </Grid>
                             <Grid item>
-                                <TextField required id="insurer-input" label="Insurer" />
+                                <TextField required id="insurer-input" label="Insurer" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setInsurer(e.target.value);
+                                }} />
                             </Grid>
                         </Grid>
                     </Grid>
@@ -121,10 +163,14 @@ function ContractForm(props: ContractFormProps) {
                     <Grid item xs={12}>
                         <Grid container justifyContent="flex-start" alignItems="center" spacing={2}>
                             <Grid item>
-                                <TextField required id="patient-surname-input" label="Surname" />
+                                <TextField required id="patient-surname-input" label="Surname" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPatientSurname(e.target.value);
+                                }} />
                             </Grid>
                             <Grid item>
-                                <TextField required id="patient-name-input" label="Name" />
+                                <TextField required id="patient-name-input" label="Name" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPatientName(e.target.value);
+                                }} />
                             </Grid>
                             <Grid item>
                                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -143,7 +189,9 @@ function ContractForm(props: ContractFormProps) {
                             </Grid>
                             <Grid item>
                                 <InputLabel id="cancer-stage-label">Cancer stage</InputLabel>
-                                <Select labelId="cancer-stage-label" id="cancer-stage-select" value="0">
+                                <Select labelId="cancer-stage-label" id="cancer-stage-select" value={patientCancerStage} onSelect={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPatientCancerStage(e.target.value as unknown as number);
+                                }}>
                                     {[0, 1, 2, 3].map((stage) => (
                                         <MenuItem
                                             value={stage}
@@ -190,7 +238,9 @@ function ContractForm(props: ContractFormProps) {
                                 ))}
                             </Select>
                             <Grid item>
-                                <TextField required type="number" id="baseprice-input" label="Baseprice CHF" value={state.baseprice} />
+                                <TextField required type="number" id="baseprice-input" label="Baseprice CHF" value={state.baseprice} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setState({...state, baseprice: e.target.valueAsNumber});
+                                }}/>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -206,16 +256,24 @@ function ContractForm(props: ContractFormProps) {
                     <Grid item xs={12}>
                         <Grid container justifyContent="flex-start" spacing={2}>
                             <Grid item>
-                                <TextField required type="number" id="os-input" label="OS after 12 months" defaultValue={props.deafault_payable_amounts?.os_after_12_months}/>
+                                <TextField required type="number" id="os-input" label="OS after 12 months" defaultValue={props.deafault_payable_amounts.os_after_12_months} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setOs(e.target.valueAsNumber);
+                                }} />
                             </Grid>
                             <Grid item>
-                                <TextField required type="number" id="no-os-input" label="No OS after 12 months" defaultValue={props.deafault_payable_amounts?.no_os_after_12_months}/>
+                                <TextField required type="number" id="no-os-input" label="No OS after 12 months" defaultValue={props.deafault_payable_amounts?.no_os_after_12_months} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setNoOs(e.target.valueAsNumber);
+                                }} />
                             </Grid>
                             <Grid item>
-                                <TextField required type="number" id="pfs-input" label="PFS after 9 months" defaultValue={props.deafault_payable_amounts?.pfs_after_9_months}/>
+                                <TextField required type="number" id="pfs-input" label="PFS after 9 months" defaultValue={props.deafault_payable_amounts?.pfs_after_9_months} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPfs(e.target.valueAsNumber);
+                                }} />
                             </Grid>
                             <Grid item>
-                                <TextField required type="number" id="no-pfs-input" label="No PFS after 9 months" defaultValue={props.deafault_payable_amounts?.no_pfs_after_9_months}/>
+                                <TextField required type="number" id="no-pfs-input" label="No PFS after 9 months" defaultValue={props.deafault_payable_amounts?.no_pfs_after_9_months} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setNoPfs(e.target.valueAsNumber);
+                                }} />
                             </Grid>
                         </Grid>
                     </Grid>
@@ -237,15 +295,15 @@ function ContractForm(props: ContractFormProps) {
                                     />
                                 </MuiPickersUtilsProvider>
                             </Grid>
-                            <Grid item>
-                                <Button variant="outlined" color="primary" size="large">
-                                    Create contract
-                                </Button>
-                            </Grid>
                         </Grid>
                     </Grid>
                 </Grid>
             </form>
+
+            <Button variant="outlined" color="primary" size="large" onClick={sendContractToParent}>
+                Create contract
+            </Button>
+
         </div>
     );
 

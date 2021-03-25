@@ -49,6 +49,23 @@ class ContractScreen extends React.Component<{}, { products: IProduct[], payable
     }
 
     createContract(data: any) {
+
+        const options = {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+
+        // send POST request
+        fetch('/contract', options)
+            .then(response => response.json())
+            .then(response => {
+                console.log(response);
+            });
+
+
         console.log(data);
     }
 
