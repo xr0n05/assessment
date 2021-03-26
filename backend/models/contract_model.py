@@ -1,25 +1,25 @@
 from app import db
 
+
 class Contract(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     producer_id = db.Column(db.Integer, db.ForeignKey('producer.id'),
-        nullable=False)
+                            nullable=False)
     insurer_id = db.Column(db.Integer, db.ForeignKey('insurer.id'),
-        nullable=False)
+                           nullable=False)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'),
-        nullable=False)
+                           nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'),
-        nullable=False)
+                           nullable=False)
     payable_amount_id = db.Column(db.Integer, db.ForeignKey('payable_amount.id'),
-        nullable=False)
+                                  nullable=False)
     treatment_start = db.Column(db.Date, nullable=False)
     amount = db.Column(db.Float, nullable=False, default=-1)
     status = db.Column(db.String(80), nullable=False)
 
-
     def to_dict(self):
-        
+
         return {
             "id": self.id,
             "treatment_start": str(self.treatment_start),

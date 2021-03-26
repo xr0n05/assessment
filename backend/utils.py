@@ -13,9 +13,8 @@ def check_contract_status(contract: dict, events: [tuple]) -> float:
     treatment_start = parser.parse(contract["treatment_start"]).date()
     today = date.today()
 
-    months_since_start = relativedelta.relativedelta(today, treatment_start).months
-
-    print(events)
+    time_delta = relativedelta.relativedelta(today, treatment_start)
+    months_since_start = time_delta.years * 12 + time_delta.months
 
     # No progression happend and patient didn't die
     if len(events) == 0:
@@ -46,7 +45,7 @@ def check_contract_status(contract: dict, events: [tuple]) -> float:
             return contract["pfs_payable"]
 
         # Died before 9 months -> no_OS payable amount
-        elif months_since_start >= 12:
+        elif months_since_start < 9:
             return contract["no_os_payable"]
 
     # If the disease progressed and the patient died within 12 months
