@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from dateutil import parser, relativedelta
 from flask import render_template, Response, request
 
@@ -84,10 +83,14 @@ def get_all_patients():
 
 @app.route('/patient/<patient_id>', methods=['GET'])
 def get_patient(patient_id):
-    patient = db.session.query(Patient).filter(Patient.id == patient_id).first()
+    # Patient info
+    patient = db.session.query(Patient) \
+        .filter(Patient.id == patient_id) \
+        .first()
 
     patient_json = patient.to_dict()
 
+    # Patient events
     patient_events_list = db.session.query(patient_events, PatientEventType.event_name) \
         .join(Patient) \
         .join(PatientEventType) \
@@ -97,6 +100,17 @@ def get_patient(patient_id):
     patient_events_dict = [f"Event: {x[3]} on date: {x[2].strftime('%d/%m/%Y')}" for x in patient_events_list]
     patient_json["events"] = patient_events_dict
 
+    # Contract info
+
+    patient_contract = db.session.query(Contract) \
+        .filter(Contract.patient_id == patient_id) \
+        .first()
+
+    patient_json["treatment_start"] = str(patient_contract.treatment_start)
+    patient_json["medication"] = f"{patient_contract.product.brand} {patient_contract.product.product} {patient_contract.product.units}; Baseprice {patient_contract.product.baseprice} CHF"
+    patient_json["contract_status"] = patient_contract.status
+
+    print(patient_json)
     return json.dumps(patient_json)
 
 

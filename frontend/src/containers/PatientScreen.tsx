@@ -35,23 +35,30 @@ interface IPatientDetails {
     birthday: string;
     cancer_stage: number;
     events: string[];
+    treatment_start: string;
+    contract_status: string;
+    medication: string;
 }
 
 
-class PatientScreen extends React.Component<{}, { patients: IPatient[], patients_loaded: boolean, patient_details: IPatientDetails, new_event: string, new_event_ts: Date | null }> {
+class PatientScreen extends React.Component<{}, { patients: IPatient[], patients_loaded: boolean, detail_patient_loaded: boolean; patient_details: IPatientDetails, new_event: string, new_event_ts: Date | null }> {
 
     constructor(props: any) {
         super(props);
         this.state = {
             patients: [],
             patients_loaded: false,
+            detail_patient_loaded: false,
             patient_details: {
                 id: -1,
                 surname: " ",
                 name: " ",
                 birthday: " ",
                 cancer_stage: 0,
-                events: []
+                events: [],
+                treatment_start: " ",
+                contract_status: " ",
+                medication: " ",
             },
             new_event: 'progressed',
             new_event_ts: new Date()
@@ -85,7 +92,7 @@ class PatientScreen extends React.Component<{}, { patients: IPatient[], patients
     searchPatient(patient_id: number) {
 
         var url: string = '/patient/' + String(patient_id);
-        this.getData<IPatientDetails>(url).then(res => this.setState({ patient_details: res }));
+        this.getData<IPatientDetails>(url).then(res => this.setState({ patient_details: res, detail_patient_loaded: true }));
     }
 
     onEventTsChange(date: Date | null) {
@@ -131,79 +138,110 @@ class PatientScreen extends React.Component<{}, { patients: IPatient[], patients
 
     render() {
 
-        if (this.state.patients_loaded) {
-            return (
-                <div style={{ padding: 20 }}>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <Grid container justifyContent="center" spacing={2}>
-                                <Grid item>
-                                    <TextField disabled id="name" label="Patient name" value={this.state.patient_details?.name} />
-                                </Grid>
-                                <Grid item>
-                                    <TextField disabled id="surname" label="Patient surname" value={this.state.patient_details?.surname} />
-                                </Grid>
-                                <Grid item>
-                                    <TextField disabled id="birthday" label="Patient Birthday" value={this.state.patient_details?.birthday} />
-                                </Grid>
-                                <Grid item>
-                                    <TextField disabled id="cancer_stage" label="Cancer stage" value={this.state.patient_details?.cancer_stage} />
-                                </Grid>
-
-                                <List component="nav" aria-label="secondary mailbox folders">
-                                    {
-                                        this.state.patient_details?.events.map(event => (<ListItemText primary={event} />))
-                                    }
-                                </List>
-
+        if (this.state.patients_loaded && this.state.detail_patient_loaded) {
+            return (<div style={{ padding: 20 }}>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <Grid container justifyContent="center" spacing={2}>
+                            <Grid item>
+                                <TextField disabled id="name" label="Patient name" value={this.state.patient_details?.name} />
+                            </Grid>
+                            <Grid item>
+                                <TextField disabled id="surname" label="Patient surname" value={this.state.patient_details?.surname} />
+                            </Grid>
+                            <Grid item>
+                                <TextField disabled id="birthday" label="Patient Birthday" value={this.state.patient_details?.birthday} />
+                            </Grid>
+                            <Grid item>
+                                <TextField disabled id="cancer_stage" label="Cancer stage" value={this.state.patient_details?.cancer_stage} />
                             </Grid>
                         </Grid>
 
+                        <div style={{ height: 20 }}></div>
                         <Divider />
+                        <div style={{ height: 20 }}></div>
 
                         <Grid item xs={12}>
-                            <Grid container justifyContent="flex-start" spacing={5}>
-                                <Grid item alignItems="center" >
-                                    <InputLabel id="new-event-label">New event</InputLabel>
-                                    <Select name="selectedEvent" labelId="new-event-label" id="event-input" value={this.state.new_event} onChange={this.onEventNameChange}>
-                                        <option
-                                            value="progressed"
-                                        >progressed</option>
-                                        <option
-                                            value="dead"
-                                        >dead</option>
-                                    </Select>
+                            <Grid container justifyContent="center" spacing={2}>
+                                <Grid item>
+                                    <TextField disabled id="status" label="Contract status" value={this.state.patient_details?.contract_status} />
                                 </Grid>
-                                <Grid item alignItems="center">
-                                    <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                                        <KeyboardDatePicker
-                                            margin="normal"
-                                            id="event-ts-picker"
-                                            label="Event occured"
-                                            format="dd/MM/yyyy"
-                                            value={this.state.new_event_ts}
-                                            onChange={this.onEventTsChange}
-                                            KeyboardButtonProps={{
-                                                'aria-label': 'change date',
-                                            }}
-                                        />
-                                    </MuiPickersUtilsProvider>
+                                <Grid item>
+                                    <TextField disabled id="medication" multiline label="Medication" value={this.state.patient_details?.medication} />
+                                </Grid>
+                                <Grid item>
+                                    <TextField disabled id="treatment_start" label="Treatment Start" value={this.state.patient_details?.treatment_start} />
                                 </Grid>
                             </Grid>
                         </Grid>
                     </Grid>
 
-                    <Button variant="outlined" color="primary" onClick={this.addEvent}>
-                        Add event
+                    <div style={{ height: 20 }}></div>
+                    <Divider />
+                    <div style={{ height: 20 }}></div>
+
+                    <Grid item xs={12}>
+                        <Grid container justifyContent="flex-start" spacing={5}>
+                            <Grid item alignItems="center" >
+                                <List component="nav" aria-label="secondary mailbox folders">
+                                    {
+                                        this.state.patient_details?.events.map(event => (<ListItemText primary={event} />))
+                                    }
+                                </List>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    <div style={{ height: 20 }}></div>
+
+                    <Grid item xs={12}>
+                        <Grid container justifyContent="flex-start" spacing={5}>
+                            <Grid item alignItems="center" >
+                                <InputLabel id="new-event-label">New event</InputLabel>
+                                <Select name="selectedEvent" labelId="new-event-label" id="event-input" value={this.state.new_event} onChange={this.onEventNameChange}>
+                                    <option
+                                        value="progressed"
+                                    >progressed</option>
+                                    <option
+                                        value="dead"
+                                    >dead</option>
+                                </Select>
+                            </Grid>
+                            <Grid item alignItems="center">
+                                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                                    <KeyboardDatePicker
+                                        margin="normal"
+                                        id="event-ts-picker"
+                                        label="Event occured"
+                                        format="dd/MM/yyyy"
+                                        value={this.state.new_event_ts}
+                                        onChange={this.onEventTsChange}
+                                        KeyboardButtonProps={{
+                                            'aria-label': 'change date',
+                                        }}
+                                    />
+                                </MuiPickersUtilsProvider>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                <div style={{ height: 20 }}></div>
+
+                <Button variant="outlined" color="primary" onClick={this.addEvent}>
+                    Add event
                     </Button>
 
-                    <Divider />
-                    <div></div>
-
-                    <div>
-                        <PatientTable patients={this.state.patients} onClickRow={this.searchPatient}></PatientTable>
-                    </div>
-                </div>);
+                <Divider />
+                <div style={{ height: 20 }}></div>
+                <div>
+                    <PatientTable patients={this.state.patients} onClickRow={this.searchPatient}></PatientTable>
+                </div>
+            </div>);
+        } else if (this.state.patients_loaded) {
+            return (<div>
+                <PatientTable patients={this.state.patients} onClickRow={this.searchPatient}></PatientTable>
+            </div>)
         } else {
             return (<Container><CircularProgress /></Container>);
         }
