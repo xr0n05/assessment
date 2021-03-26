@@ -15,6 +15,7 @@ import {
     KeyboardDatePicker,
     MuiPickersUtilsProvider
 } from '@material-ui/pickers';
+import { Container } from "@material-ui/core";
 
 
 export interface ContractFormProps {
@@ -67,6 +68,9 @@ function ContractForm(props: ContractFormProps) {
     const [noPfs, setNoPfs] = React.useState<number>(props.deafault_payable_amounts.no_pfs_after_9_months);
 
     const [open, setOpen] = React.useState(false);
+    const [ageOpen, setAgeOpen] = React.useState(false);
+
+
 
 
 
@@ -108,27 +112,58 @@ function ContractForm(props: ContractFormProps) {
         setPatientCancerStage(event.target.value as unknown as number);
     }
 
-  
+
     const handleClose = (event?: React.SyntheticEvent, reason?: string) => {
-      if (reason === 'clickaway') {
-        return;
-      }
-  
-      setOpen(false);
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setOpen(false);
     };
 
 
+    const handleAgeClose = (event?: React.SyntheticEvent, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setAgeOpen(false);
+    };
+
+
+    const calcAge = (birthday: Date | null) => {
+
+        if (!birthday) return -1;
+
+        var birthDate = new Date(birthday);
+        var today = new Date();
+
+        var years = (today.getFullYear() - birthDate.getFullYear());
+
+        if (today.getMonth() < birthDate.getMonth() ||
+            today.getMonth() == birthDate.getMonth() && today.getDate() < birthDate.getDate()) {
+            years--;
+        }
+
+        return years;
+    }
+
     const sendContractToParent = () => {
 
-        if (insurer === "" || 
-            manufacturer === "" || 
-            patientName === "" || 
-            patientSurname === "" || 
-            state.selectedBrand === "" || 
-            state.selectedProduct === "" || 
-            !state.selectedUnits || 
+        if (insurer === "" ||
+            manufacturer === "" ||
+            patientName === "" ||
+            patientSurname === "" ||
+            state.selectedBrand === "" ||
+            state.selectedProduct === "" ||
+            !state.selectedUnits ||
             !state.baseprice) {
             setOpen(true);
+            return;
+        }
+
+        if (selectedDate || calcAge(selectedDate) >= 55) {
+            setAgeOpen(true);
             return;
         }
 
@@ -336,6 +371,14 @@ function ContractForm(props: ContractFormProps) {
                     Please fill out all required input fields!
                 </Alert>
             </Snackbar>
+
+            <Container>
+                <Snackbar open={ageOpen} autoHideDuration={3000} onClose={handleAgeClose}>
+                    <Alert onClose={handleAgeClose} severity="error">
+                        The patient must be younger than 55 to enroll!
+                </Alert>
+                </Snackbar>
+            </Container>
         </div>
     );
 

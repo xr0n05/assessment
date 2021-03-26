@@ -1,9 +1,11 @@
-from flask import Flask, render_template, Response, request
-from app import app, db
+import json
 from datetime import datetime
 from dateutil import parser, relativedelta
-import json
-from models import Contract, Patient, patient_events, Product, Producer, Insurer, PayableAmount, CancerStage, PatientEventType
+from flask import render_template, Response, request
+
+from app import app, db
+from models import Contract, Patient, patient_events, Product, Producer, \
+                   Insurer, PayableAmount, CancerStage, PatientEventType
 from utils import get_age, check_contract_status
 
 
@@ -14,34 +16,43 @@ def home():
 
 @app.route('/event', methods=['POST'])
 def create_new_event():
- 
+
     patient_id = request.json["patient_id"]
     event_name = request.json["event_name"]
     event_ts = request.json["event_ts"]
 
-    event_type = db.session.query(PatientEventType).filter(PatientEventType.event_name == event_name).first()
+    event_type = db.session.query(PatientEventType) \
+        .filter(PatientEventType.event_name == event_name) \
+        .first()
 
-    statement = patient_events.insert().values(patient_id=patient_id, event_id=event_type.id, event_ts=parser.parse(event_ts))
+    statement = patient_events.insert() \
+        .values(patient_id=patient_id, event_id=event_type.id, event_ts=parser.parse(event_ts))
     db.session.execute(statement)
     db.session.commit()
 
-
     # Check contract status
-    contract = db.session.query(Contract).filter(Contract.patient_id == patient_id).first()
-    patient_events_list = db.session.query(patient_events, PatientEventType.event_name).join(Patient).join(PatientEventType).filter(Patient.id == patient_id).all()
+    contract = db.session.query(Contract) \
+        .filter(Contract.patient_id == patient_id) \
+        .first()
+
+    patient_events_list = db.session.query(patient_events, PatientEventType.event_name) \
+        .join(Patient) \
+        .join(PatientEventType) \
+        .filter(Patient.id == patient_id) \
+        .all()
 
     payable_amount = check_contract_status(contract.to_dict(), patient_events_list)
 
     if payable_amount == -1:
         pass
     else:
-        start_to_event_months = relativedelta.relativedelta(parser.parse(event_ts).replace(tzinfo=None), contract.treatment_start).months
+        start_to_event_months = relativedelta.relativedelta(parser.parse(event_ts).replace(tzinfo=None),
+                                                            contract.treatment_start).months
         contract.amount = start_to_event_months * (contract.product.baseprice * payable_amount)
         contract.status = 'finished'
         db.session.commit()
 
     return Response('{"status": "ok"}', 200)
-
 
 
 @app.route('/products', methods=['GET'])
@@ -77,7 +88,12 @@ def get_patient(patient_id):
 
     patient_json = patient.to_dict()
 
-    patient_events_list = db.session.query(patient_events, PatientEventType.event_name).join(Patient).join(PatientEventType).filter(Patient.id == patient_id).all()
+    patient_events_list = db.session.query(patient_events, PatientEventType.event_name) \
+        .join(Patient) \
+        .join(PatientEventType) \
+        .filter(Patient.id == patient_id) \
+        .all()
+
     patient_events_dict = [f"Event: {x[3]} on date: {x[2].strftime('%d/%m/%Y')}" for x in patient_events_list]
     patient_json["events"] = patient_events_dict
 
@@ -102,8 +118,8 @@ def create_contract():
         # Find or create insurer
         insurer_name = request.json['insurer']
         match = db.session.query(Insurer) \
-                .filter(Insurer.name == insurer_name) \
-                .first()
+            .filter(Insurer.name == insurer_name) \
+            .first()
 
         if match:
             insurer = match
@@ -113,8 +129,8 @@ def create_contract():
         # Find or create manufacturer
         manufacturer_name = request.json['manufacturer']
         match = db.session.query(Producer) \
-                .filter(Producer.name == manufacturer_name) \
-                .first()
+            .filter(Producer.name == manufacturer_name) \
+            .first()
 
         if match:
             manufacturer = match
@@ -130,18 +146,23 @@ def create_contract():
         # Check if patient is young enough for enrollment
         patient_age = get_age(patient_birthday)
         if patient_age >= 55:
-            return Response(f"{{'Error':'Patient does not fullfill enrollment criteria: Age {patient_age} >= 55'}}", status=400, mimetype='application/json')
+            return Response(f"{{'Error':'Patient does not fullfill enrollment criteria: Age {patient_age} >= 55'}}",
+                            status=400,
+                            mimetype='application/json')
 
         match = db.session.query(Patient) \
-                .filter(Patient.name == patient_name) \
-                .filter(Patient.surname == patient_surname) \
-                .filter(Patient.birthday == patient_birthday) \
-                .first()
+            .filter(Patient.name == patient_name) \
+            .filter(Patient.surname == patient_surname) \
+            .filter(Patient.birthday == patient_birthday) \
+            .first()
 
         if match:
             patient = match
         else:
-            patient = Patient(name=patient_name, surname=patient_surname, birthday=patient_birthday, cancer_stage=patient_cancer_stage)
+            patient = Patient(name=patient_name,
+                              surname=patient_surname,
+                              birthday=patient_birthday,
+                              cancer_stage=patient_cancer_stage)
 
         # Find or create product configuration
         product_brand = request.json['product_brand']
@@ -149,17 +170,19 @@ def create_contract():
         product_units = request.json['product_units']
         product_baseprice = request.json['product_baseprice']
         match = db.session.query(Product) \
-                .filter(Product.brand == product_brand) \
-                .filter(Product.product == product_name) \
-                .filter(Product.units == product_units) \
-                .filter(Product.baseprice == product_baseprice) \
-                .first()
+            .filter(Product.brand == product_brand) \
+            .filter(Product.product == product_name) \
+            .filter(Product.units == product_units) \
+            .filter(Product.baseprice == product_baseprice) \
+            .first()
 
         if match:
             product = match
         else:
-            product = Product(brand=product_brand, product=product_name, units=product_units, baseprice=product_baseprice)
-
+            product = Product(brand=product_brand,
+                              product=product_name,
+                              units=product_units,
+                              baseprice=product_baseprice)
 
         # Find or create payable amounts configuration
         os = request.json['os']
@@ -167,19 +190,28 @@ def create_contract():
         pfs = request.json['pfs']
         no_pfs = request.json['no_pfs']
         match = db.session.query(PayableAmount) \
-                .filter(PayableAmount.os_after_12_months == os) \
-                .filter(PayableAmount.no_os_after_12_months == no_os) \
-                .filter(PayableAmount.pfs_after_9_months == pfs) \
-                .filter(PayableAmount.no_pfs_after_9_months == no_pfs) \
-                .first()
+            .filter(PayableAmount.os_after_12_months == os) \
+            .filter(PayableAmount.no_os_after_12_months == no_os) \
+            .filter(PayableAmount.pfs_after_9_months == pfs) \
+            .filter(PayableAmount.no_pfs_after_9_months == no_pfs) \
+            .first()
 
         if match:
             payable_amounts = match
         else:
-            payable_amounts = PayableAmount(os_after_12_months=os, no_os_after_12_months=no_os, pfs_after_9_months=pfs, no_pfs_after_9_months=no_pfs)
-        
-        new_contract = Contract(insurer=insurer, producer=manufacturer, product=product, patient=patient, status='ongoing', treatment_start=treatment_start, payable_amounts=payable_amounts)
-        
+            payable_amounts = PayableAmount(os_after_12_months=os,
+                                            no_os_after_12_months=no_os,
+                                            pfs_after_9_months=pfs,
+                                            no_pfs_after_9_months=no_pfs)
+
+        new_contract = Contract(insurer=insurer,
+                                producer=manufacturer,
+                                product=product,
+                                patient=patient,
+                                status='ongoing',
+                                treatment_start=treatment_start,
+                                payable_amounts=payable_amounts)
+
         # Check if contract is already finished -> simulation purposes
         payable = check_contract_status(new_contract.to_dict(), [])
 
@@ -196,11 +228,6 @@ def create_contract():
     except:
 
         return Response('{"status": "error"}', status=500)
-
-    
-
-
-
 
 
 if __name__ == '__main__':
