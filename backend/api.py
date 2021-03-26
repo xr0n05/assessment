@@ -216,8 +216,8 @@ def create_contract():
         payable = check_contract_status(new_contract.to_dict(), [])
 
         if not payable == -1:
-            start_to_today = relativedelta.relativedelta(datetime.today(), treatment_start).months
-            new_contract.amount = start_to_today * (product_baseprice * payable)
+            # No events could have been generated at contract creation -> bill for 9 months PFS
+            new_contract.amount = 9 * (product_baseprice * payable)
             new_contract.status = 'finished'
 
         db.session.add(new_contract)

@@ -162,7 +162,7 @@ function ContractForm(props: ContractFormProps) {
             return;
         }
 
-        if (selectedDate || calcAge(selectedDate) >= 55) {
+        if (selectedDate && calcAge(selectedDate) >= 55) {
             setAgeOpen(true);
             return;
         }
